@@ -1,182 +1,80 @@
-/**
- * TruChek — Avatar Component
- * User avatars with fallback initials and status indicators
- */
-
-import React from "react";
-import * as AvatarPrimitive from "@radix-ui/react-avatar";
-import { cn } from "@/lib/utils";
-
-// ============================================================
-// TYPES
-// ============================================================
+import { cn } from "../../utils/cn";
 
 interface AvatarProps {
-  src?:          string;
-  alt?:          string;
-  name?:         string;
-  size?:         "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-  status?:       "online" | "offline" | "busy" | "away";
-  className?:    string;
-  fallbackClassName?: string;
+  src?: string | null;
+  name?: string;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  className?: string;
+  online?: boolean;
 }
 
-// ============================================================
-// SIZE MAP
-// ============================================================
-
-const sizeMap = {
-  xs:  "w-6 h-6 text-xs",
-  sm:  "w-8 h-8 text-xs",
-  md:  "w-10 h-10 text-sm",
-  lg:  "w-12 h-12 text-base",
-  xl:  "w-16 h-16 text-lg",
-  "2xl": "w-20 h-20 text-xl",
-} as const;
-
-const statusSizeMap = {
-  xs:  "w-1.5 h-1.5 -bottom-px -right-px",
-  sm:  "w-2 h-2 bottom-0 right-0",
-  md:  "w-2.5 h-2.5 bottom-0 right-0",
-  lg:  "w-3 h-3 bottom-0 right-0",
-  xl:  "w-3.5 h-3.5 bottom-0.5 right-0.5",
-  "2xl": "w-4 h-4 bottom-0.5 right-0.5",
-} as const;
-
-const statusColorMap = {
-  online:  "bg-[#22c55e]",
-  offline: "bg-[#475569]",
-  busy:    "bg-[#f43f5e]",
-  away:    "bg-[#f59e0b]",
-} as const;
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-const getInitials = (name: string): string => {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0]?.charAt(0).toUpperCase() ?? "?";
-  return `${parts[0]?.charAt(0) ?? ""}${parts[parts.length - 1]?.charAt(0) ?? ""}`.toUpperCase();
+const sizes = {
+  xs: "h-6 w-6 text-xs",
+  sm: "h-8 w-8 text-sm",
+  md: "h-9 w-9 text-sm",
+  lg: "h-10 w-10 text-base",
+  xl: "h-16 w-16 text-xl",
 };
 
-const getAvatarColor = (name: string): string => {
-  const colors = [
-    "from-[#6366f1] to-[#4f46e5]",
-    "from-[#8b5cf6] to-[#7c3aed]",
-    "from-[#06b6d4] to-[#0891b2]",
-    "from-[#22c55e] to-[#16a34a]",
-    "from-[#f59e0b] to-[#d97706]",
-    "from-[#f43f5e] to-[#e11d48]",
-    "from-[#a78bfa] to-[#8b5cf6]",
+const onlineSizes = {
+  xs: "h-1.5 w-1.5 -bottom-0 -right-0",
+  sm: "h-2 w-2 bottom-0 right-0",
+  md: "h-2.5 w-2.5 bottom-0 right-0",
+  lg: "h-3 w-3 bottom-0 right-0",
+  xl: "h-3.5 w-3.5 bottom-0.5 right-0.5",
+};
+
+function getInitials(name?: string): string {
+  if (!name) return "?";
+  const parts = name.trim().split(" ");
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function getGradient(name?: string): string {
+  const gradients = [
+    "from-violet-500 to-indigo-600",
+    "from-rose-500 to-pink-600",
+    "from-emerald-500 to-teal-600",
+    "from-amber-500 to-orange-600",
+    "from-blue-500 to-cyan-600",
+    "from-fuchsia-500 to-purple-600",
   ];
-  const index = name.charCodeAt(0) % colors.length;
-  return colors[index] ?? colors[0]!;
-};
+  if (!name) return gradients[0];
+  const idx = name.charCodeAt(0) % gradients.length;
+  return gradients[idx];
+}
 
-// ============================================================
-// COMPONENT
-// ============================================================
-
-export const Avatar: React.FC<AvatarProps> = ({
-  src,
-  alt,
-  name = "User",
-  size = "md",
-  status,
-  className,
-  fallbackClassName,
-}) => {
+export function Avatar({ src, name, size = "md", className, online }: AvatarProps) {
   return (
-    <div className="relative inline-flex shrink-0">
-      <AvatarPrimitive.Root
-        className={cn(
-          "relative flex shrink-0 overflow-hidden rounded-full",
-          sizeMap[size],
-          className
-        )}
-      >
-        <AvatarPrimitive.Image
+    <div className={cn("relative flex-shrink-0", className)}>
+      {src ? (
+        <img
           src={src}
-          alt={alt ?? name}
-          className="h-full w-full object-cover"
+          alt={name ?? "Avatar"}
+          className={cn("rounded-full object-cover", sizes[size])}
         />
-        <AvatarPrimitive.Fallback
+      ) : (
+        <div
           className={cn(
-            "flex h-full w-full items-center justify-center rounded-full",
-            "bg-gradient-to-br",
-            "text-white font-semibold",
-            getAvatarColor(name),
-            fallbackClassName
+            "flex items-center justify-center rounded-full font-semibold text-white",
+            `bg-gradient-to-br ${getGradient(name)}`,
+            sizes[size]
           )}
-          delayMs={100}
+          aria-label={name ?? "User avatar"}
         >
           {getInitials(name)}
-        </AvatarPrimitive.Fallback>
-      </AvatarPrimitive.Root>
-
-      {/* Status indicator */}
-      {status && (
+        </div>
+      )}
+      {online !== undefined && (
         <span
           className={cn(
-            "absolute rounded-full border-2 border-[#09090e]",
-            statusSizeMap[size],
-            statusColorMap[status]
+            "absolute block rounded-full border-2 dark:border-slate-900 border-white",
+            online ? "bg-emerald-400" : "bg-slate-500",
+            onlineSizes[size]
           )}
-          aria-label={`Status: ${status}`}
         />
       )}
     </div>
   );
-};
-
-// ============================================================
-// AVATAR GROUP
-// ============================================================
-
-interface AvatarGroupProps {
-  users:     { name: string; src?: string; alt?: string }[];
-  max?:      number;
-  size?:     AvatarProps["size"];
-  className?: string;
 }
-
-export const AvatarGroup: React.FC<AvatarGroupProps> = ({
-  users,
-  max = 5,
-  size = "sm",
-  className,
-}) => {
-  const visible  = users.slice(0, max);
-  const overflow = users.length - max;
-
-  return (
-    <div className={cn("flex items-center", className)}>
-      {visible.map((user, i) => (
-        <div
-          key={i}
-          className={cn(
-            "-ml-2 first:ml-0",
-            "ring-2 ring-[#09090e] rounded-full",
-          )}
-          style={{ zIndex: visible.length - i }}
-        >
-          <Avatar {...user} size={size} />
-        </div>
-      ))}
-
-      {overflow > 0 && (
-        <div
-          className={cn(
-            "-ml-2 ring-2 ring-[#09090e] rounded-full",
-            "flex items-center justify-center",
-            "bg-white/10 text-[#94a3b8] font-medium",
-            sizeMap[size],
-          )}
-        >
-          <span className="text-xs">+{overflow}</span>
-        </div>
-      )}
-    </div>
-  );
-};

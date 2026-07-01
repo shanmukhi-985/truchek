@@ -1,195 +1,205 @@
-import { useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { motion } from 'framer-motion';
-import { Mail, ArrowRight } from 'lucide-react';
-import { loginSchema } from '../../lib/validations/auth';
-import type { LoginSchema } from '../../lib/validations/auth';
-import { useAuth } from '../../contexts/AuthContext';
-import { ROUTES } from '../../lib/constants';
-import { AuthLayout } from '../../components/auth/AuthLayout';
-import { AuthCard } from '../../components/auth/AuthCard';
-import { FormInput } from '../../components/auth/FormInput';
-import { PasswordInput } from '../../components/auth/PasswordInput';
-import { AuthButton } from '../../components/auth/AuthButton';
-import { SocialLoginButton } from '../../components/auth/SocialLoginButton';
-import { AuthDivider } from '../../components/auth/AuthDivider';
-import { AuthAlert } from '../../components/auth/AuthAlert';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Eye, EyeOff, Shield, ArrowRight, Mail, Lock } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "../../components/ui/Button";
+import { cn } from "../../utils/cn";
 
 export function LoginPage() {
-  const { login, isLoading, error, clearError, isAuthenticated } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const { login, isLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || ROUTES.DASHBOARD;
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginSchema>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', remember_me: false },
-  });
-
-  useEffect(() => {
-    if (isAuthenticated) navigate(from, { replace: true });
-  }, [isAuthenticated, navigate, from]);
-
-  useEffect(() => {
-    return () => clearError();
-  }, [clearError]);
-
-  const onSubmit = async (data: LoginSchema) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
     try {
-      await login(data, data.remember_me);
-      navigate(from, { replace: true });
+      await login(email, password);
+      navigate("/dashboard");
     } catch {
-      // Error is managed by AuthContext
+      setError("Invalid email or password. Please try again.");
     }
   };
 
-  const loading = isLoading || isSubmitting;
-
   return (
-    <AuthLayout>
-      <AuthCard>
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8 text-center"
-        >
-          <h1 className="text-2xl font-semibold text-white tracking-tight">
-            Welcome back
-          </h1>
-          <p className="mt-2 text-sm text-zinc-500">
-            Sign in to your TruChek account
-          </p>
-        </motion.div>
+    <div className="flex min-h-screen dark:bg-slate-950 bg-slate-50">
+      {/* Left panel */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] bg-gradient-to-br from-violet-950 via-slate-900 to-indigo-950 p-10 relative overflow-hidden">
+        {/* Decorations */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full bg-violet-600/20 blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full bg-indigo-600/20 blur-3xl" />
+        </div>
 
-        {/* Error alert */}
-        {error && (
-          <div className="mb-6">
-            <AuthAlert variant="error" message={error.message} onClose={clearError} />
+        <div className="relative flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg">
+            <Shield className="h-5 w-5 text-white" />
           </div>
-        )}
+          <div>
+            <span className="text-base font-bold text-white">TruChek</span>
+            <p className="text-[10px] text-slate-400">Think. Check. Trust.</p>
+          </div>
+        </div>
 
-        {/* Social login */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-          className="flex flex-col gap-3 mb-6"
-        >
-          <SocialLoginButton provider="google" disabled={loading} />
-          <SocialLoginButton provider="github" disabled={loading} />
-        </motion.div>
-
-        <AuthDivider className="mb-6" />
-
-        {/* Form */}
-        <motion.form
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-          className="space-y-4"
-        >
-          {/* Email */}
-          <FormInput
-            {...register('email')}
-            type="email"
-            label="Email address"
-            placeholder="you@example.com"
-            icon={Mail}
-            error={errors.email?.message}
-            autoComplete="email"
-            required
-            disabled={loading}
-          />
-
-          {/* Password */}
-          <div className="space-y-1">
-            <PasswordInput
-              {...register('password')}
-              label="Password"
-              placeholder="Enter your password"
-              error={errors.password?.message}
-              autoComplete="current-password"
-              required
-              disabled={loading}
-            />
-            <div className="flex justify-end">
-              <Link
-                to={ROUTES.FORGOT_PASSWORD}
-                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                Forgot password?
-              </Link>
+        <div className="relative">
+          <blockquote className="text-3xl font-bold text-white leading-tight mb-6">
+            "The internet is safer when we verify before we trust."
+          </blockquote>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+              TC
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">TruChek Team</p>
+              <p className="text-xs text-slate-400">Security Intelligence Platform</p>
             </div>
           </div>
+        </div>
 
-          {/* Remember me */}
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div className="relative">
-              <input
-                {...register('remember_me')}
-                type="checkbox"
-                className="peer sr-only"
-                disabled={loading}
-              />
-              <div className="h-4 w-4 rounded border border-white/[0.12] bg-white/[0.04] peer-checked:bg-violet-600 peer-checked:border-violet-600 transition-all duration-200 flex items-center justify-center">
-                <svg
-                  className="h-2.5 w-2.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                >
-                  <path
-                    d="M2 6l3 3 5-5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+        <div className="relative flex gap-6">
+          {[["12,847", "Scans Today"], ["3,291", "Threats Blocked"], ["94%", "Accuracy"]].map(([val, label]) => (
+            <div key={label}>
+              <p className="text-xl font-bold text-white">{val}</p>
+              <p className="text-xs text-slate-400">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right panel */}
+      <div className="flex flex-1 items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm"
+        >
+          {/* Logo on mobile */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg">
+              <Shield className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-lg font-bold dark:text-white text-slate-900">TruChek</span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold dark:text-white text-slate-900">
+              Welcome back
+            </h1>
+            <p className="mt-1 text-sm dark:text-slate-400 text-slate-600">
+              Sign in to your TruChek account
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-medium dark:text-slate-300 text-slate-700 mb-1.5">
+                Email address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 dark:text-slate-500 text-slate-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className={cn(
+                    "w-full rounded-xl border py-2.5 pl-9 pr-4 text-sm outline-none transition-all",
+                    "dark:bg-slate-900/60 dark:border-slate-700/60 dark:text-white dark:placeholder-slate-500",
+                    "dark:focus:border-violet-500 dark:focus:ring-1 dark:focus:ring-violet-500/30",
+                    "bg-white border-slate-200 text-slate-900 placeholder-slate-400",
+                    "focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
+                  )}
+                />
               </div>
             </div>
-            <span className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">
-              Remember me for 7 days
-            </span>
-          </label>
 
-          {/* Submit */}
-          <AuthButton
-            type="submit"
-            isLoading={loading}
-            loadingText="Signing in..."
-            className="mt-6"
-          >
-            Sign in
-            <ArrowRight className="h-4 w-4" />
-          </AuthButton>
-        </motion.form>
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium dark:text-slate-300 text-slate-700">
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 dark:text-slate-500 text-slate-400" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className={cn(
+                    "w-full rounded-xl border py-2.5 pl-9 pr-10 text-sm outline-none transition-all",
+                    "dark:bg-slate-900/60 dark:border-slate-700/60 dark:text-white dark:placeholder-slate-500",
+                    "dark:focus:border-violet-500 dark:focus:ring-1 dark:focus:ring-violet-500/30",
+                    "bg-white border-slate-200 text-slate-900 placeholder-slate-400",
+                    "focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 dark:text-slate-500 dark:hover:text-slate-300 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
 
-        {/* Footer */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-6 text-center text-sm text-zinc-500"
-        >
-          Don't have an account?{' '}
-          <Link
-            to={ROUTES.SIGNUP}
-            className="text-violet-400 hover:text-violet-300 font-medium transition-colors"
-          >
-            Create account
-          </Link>
-        </motion.p>
-      </AuthCard>
-    </AuthLayout>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-rose-400 bg-rose-500/10 rounded-lg px-3 py-2"
+              >
+                {error}
+              </motion.p>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              loading={isLoading}
+              icon={<ArrowRight className="h-4 w-4" />}
+              iconPosition="right"
+            >
+              Sign in
+            </Button>
+          </form>
+
+          {/* Demo hint */}
+          <div className="mt-4 rounded-xl border dark:border-slate-800 border-slate-200 dark:bg-slate-900/40 bg-slate-50 px-4 py-3">
+            <p className="text-xs dark:text-slate-400 text-slate-500">
+              <span className="font-medium dark:text-slate-300 text-slate-700">Demo:</span>{" "}
+              Any email & password will sign you in for Phase 3 preview.
+            </p>
+          </div>
+
+          <p className="mt-6 text-center text-sm dark:text-slate-500 text-slate-500">
+            Don't have an account?{" "}
+            <Link
+              to="/signup"
+              className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+            >
+              Sign up free
+            </Link>
+          </p>
+        </motion.div>
+      </div>
+    </div>
   );
 }
