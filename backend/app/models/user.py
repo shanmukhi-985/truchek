@@ -4,7 +4,7 @@ User SQLAlchemy model.
 import uuid
 from datetime import datetime
 from sqlalchemy import String, Boolean, DateTime, Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from ..database import Base
@@ -55,6 +55,9 @@ class User(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+
+    # Relationships
+    scans: Mapped[list["Scan"]] = relationship("Scan", back_populates="user", lazy="dynamic")
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email!r} role={self.role!r}>"
